@@ -1,0 +1,333 @@
+# Chapter 3: System Design and Architecture
+
+## 3.1 Introduction
+
+As a Nigerian computer science student at the University of Lagos, I embarked on building this sentiment analysis web application to demonstrate the practical application of machine learning concepts we learned in class. The project combines modern web development with artificial intelligence to create a tool that can analyze the emotional tone of business and political content.
+
+## 3.2 System Architecture Overview
+
+The application follows a client-side architecture built with React.js and Next.js framework. I chose this approach because:
+
+1. **Cost-effectiveness**: As a student with limited resources, hosting a client-side application is more affordable than maintaining server infrastructure
+2. **Learning opportunity**: It allowed me to implement machine learning algorithms from scratch rather than relying on external APIs
+3. **Performance**: All processing happens in the browser, providing instant results without network delays
+
+
+### 3.2.1 Technology Stack Selection
+
+**Frontend Framework**: Next.js 15 with React 19
+
+- Chosen for its excellent developer experience and built-in optimizations
+- App Router provides modern routing capabilities
+- Server-side rendering capabilities (though not used in this client-side implementation)
+
+
+**UI Components**: Shadcn/ui with Tailwind CSS
+
+- Professional-looking components that saved development time
+- Consistent design system throughout the application
+- Responsive design out of the box
+
+
+**Machine Learning**: Custom Naive Bayes Implementation
+
+- Implemented from scratch to demonstrate understanding of the algorithm
+- No external dependencies required
+- Lightweight and fast execution
+
+
+## 3.3 Design Patterns and Principles
+
+### 3.3.1 Component-Based Architecture
+
+The application is structured using React's component-based architecture:
+
+```plaintext
+SentimentAnalyzer (Main Component)
+├── Header Section
+├── Input Card Component
+├── Results Card Component
+├── Examples Card Component
+└── Info Card Component
+```
+
+### 3.3.2 State Management
+
+I used React's built-in `useState` and `useEffect` hooks for state management:
+
+- `text`: Stores user input
+- `result`: Stores analysis results
+- `isAnalyzing`: Manages loading states
+- `classifier`: Holds the trained model instance
+
+
+### 3.3.3 Separation of Concerns
+
+- **UI Logic**: Handled by React components
+- **ML Logic**: Encapsulated in the `NaiveBayesClassifier` class
+- **Business Logic**: Category detection and result processing functions
+- **Styling**: Managed through Tailwind CSS classes
+
+
+## 3.4 User Interface Design
+
+### 3.4.1 Design Philosophy
+
+I adopted a modern, gradient-heavy design inspired by contemporary web applications. The color scheme uses:
+
+- Indigo and purple gradients for primary elements
+- Emerald green for positive sentiment
+- Rose red for negative sentiment
+- Neutral grays for balanced content
+
+
+### 3.4.2 Responsive Design
+
+The application uses CSS Grid and Flexbox for responsive layouts:
+
+- Mobile-first approach
+- Breakpoints at 768px (md) and 1024px (lg)
+- Cards stack vertically on mobile, side-by-side on desktop
+
+
+### 3.4.3 User Experience Considerations
+
+- **Loading States**: Animated spinners during analysis
+- **Visual Feedback**: Color-coded results and progress bars
+- **Interactive Examples**: Clickable example texts for easy testing
+- **Accessibility**: Proper ARIA labels and semantic HTML
+
+
+---
+
+# Chapter 4: Implementation Details
+
+## 4.1 Machine Learning Implementation
+
+### 4.1.1 Naive Bayes Classifier from Scratch
+
+As a student studying machine learning, I implemented the Naive Bayes algorithm from scratch to demonstrate my understanding. The implementation includes:
+
+```typescript
+class NaiveBayesClassifier {
+  private vocabulary: Set<string> = new Set()
+  private wordCounts: { [category: string]: { [word: string]: number } } = {}
+  private categoryCounts: { [category: string]: number } = {}
+  private totalDocuments = 0
+```
+
+**Key Features:**
+
+1. **Vocabulary Building**: Maintains a set of all unique words encountered during training
+2. **Word Counting**: Tracks frequency of each word in each category
+3. **Document Counting**: Keeps track of total documents per category
+
+
+### 4.1.2 Text Preprocessing
+
+The tokenization process includes several steps:
+
+```typescript
+private tokenize(text: string): string[] {
+  return text
+    .toLowerCase()                    // Convert to lowercase
+    .replace(/[^\w\s]/g, " ")        // Remove punctuation
+    .split(/\s+/)                    // Split on whitespace
+    .filter((word) => word.length > 2) // Remove short words
+}
+```
+
+This preprocessing helps improve classification accuracy by:
+
+- Normalizing case differences
+- Removing noise from punctuation
+- Filtering out very short words that don't carry much meaning
+
+
+### 4.1.3 Training Data Curation
+
+I manually curated 80 training examples (20 per category):
+
+- **Business Positive**: Earnings reports, successful mergers, stock gains
+- **Business Negative**: Layoffs, bankruptcies, market crashes
+- **Politics Positive**: Successful policies, diplomatic achievements, democratic progress
+- **Politics Negative**: Corruption scandals, government shutdowns, political crises
+
+
+This balanced dataset ensures the model doesn't develop bias toward any particular sentiment or domain.
+
+### 4.1.4 Classification Algorithm
+
+The classification process uses Bayes' theorem with Laplace smoothing:
+
+```typescript
+// Calculate log probability for each category
+let logProbability = Math.log(this.categoryCounts[category] / this.totalDocuments)
+
+words.forEach((word) => {
+  const wordCountInCategory = this.wordCounts[category][word] || 0
+  const totalWordsInCategory = Object.values(this.wordCounts[category])
+    .reduce((sum, count) => sum + count, 0)
+  
+  // Laplace smoothing prevents zero probabilities
+  const probability = (wordCountInCategory + 1) / 
+    (totalWordsInCategory + this.vocabulary.size)
+  logProbability += Math.log(probability)
+})
+```
+
+**Laplace Smoothing**: Adds 1 to word counts to handle unseen words gracefully, preventing zero probabilities that would break the classification.
+
+## 4.2 Category Detection System
+
+### 4.2.1 Keyword-Based Classification
+
+I implemented a simple but effective keyword-based system to detect content categories:
+
+```typescript
+function detectCategory(text: string): "business" | "politics" | "general" {
+  const businessKeywords = [
+    "company", "business", "market", "stock", "revenue", 
+    "profit", "investment", "economy", "financial", "corporate"
+    // ... more keywords
+  ]
+  
+  const politicsKeywords = [
+    "government", "policy", "election", "vote", "politician",
+    "congress", "senate", "president", "democracy"
+    // ... more keywords
+  ]
+```
+
+The system counts keyword matches and assigns the category with the highest score. This approach works well for the target domains and could be extended with more sophisticated NLP techniques.
+
+### 4.2.2 Confidence Thresholding
+
+To handle ambiguous cases, I implemented confidence thresholding:
+
+```typescript
+// If confidence is low (close to 50/50), classify as neutral
+if (confidence < 0.65) {
+  sentiment = "neutral"
+}
+```
+
+This prevents the system from making overconfident predictions on unclear content.
+
+## 4.3 Frontend Implementation
+
+### 4.3.1 React Hooks Usage
+
+**useState for State Management:**
+
+```typescript
+const [text, setText] = useState("")
+const [result, setResult] = useState<SentimentResult | null>(null)
+const [isAnalyzing, setIsAnalyzing] = useState(false)
+const [classifier, setClassifier] = useState<NaiveBayesClassifier | null>(null)
+```
+
+**useEffect for Initialization:**
+
+```typescript
+useEffect(() => {
+  const initializeClassifier = () => {
+    const newClassifier = new NaiveBayesClassifier()
+    // Training data addition...
+    setClassifier(newClassifier)
+  }
+  initializeClassifier()
+}, [])
+```
+
+### 4.3.2 Async Processing with UX Considerations
+
+To provide better user experience, I added artificial delay to show loading states:
+
+```typescript
+const analyzeSentiment = async () => {
+  setIsAnalyzing(true)
+  
+  // Simulate processing time for better UX
+  await new Promise((resolve) => setTimeout(resolve, 800))
+  
+  // Actual analysis logic...
+  
+  setIsAnalyzing(false)
+}
+```
+
+This gives users visual feedback that processing is happening, even though the actual computation is very fast.
+
+### 4.3.3 Dynamic Styling System
+
+I created a comprehensive styling system that adapts based on results:
+
+```typescript
+const getSentimentColors = (sentiment: string) => {
+  switch (sentiment) {
+    case "positive":
+      return {
+        bg: "bg-gradient-to-r from-emerald-50 to-green-50",
+        border: "border-emerald-200",
+        text: "text-emerald-800",
+        badge: "bg-gradient-to-r from-emerald-500 to-green-500 text-white",
+      }
+    // ... other cases
+  }
+}
+```
+
+This system ensures consistent visual feedback across all result displays.
+
+## 4.4 Challenges and Solutions
+
+### 4.4.1 Browser Compatibility
+
+**Challenge**: Ensuring the application works across different browsers and devices.
+**Solution**: Used modern JavaScript features with proper polyfills through Next.js, and tested on multiple browsers.
+
+### 4.4.2 Performance Optimization
+
+**Challenge**: Keeping the application responsive during text analysis.
+**Solution**: Implemented efficient tokenization and used React's state management to prevent unnecessary re-renders.
+
+### 4.4.3 Training Data Quality
+
+**Challenge**: Creating balanced, representative training data as a student without access to large datasets.
+**Solution**: Manually curated examples from real news sources, ensuring balanced representation across categories and sentiments.
+
+## 4.5 Testing and Validation
+
+### 4.5.1 Manual Testing Approach
+
+As a student project, I conducted extensive manual testing:
+
+- Tested with various text lengths and complexities
+- Verified category detection accuracy
+- Ensured UI responsiveness across devices
+- Validated sentiment classification with known examples
+
+
+### 4.5.2 Example-Based Validation
+
+I included comprehensive examples in the UI that serve dual purposes:
+
+- Demonstrate the system's capabilities to users
+- Provide ongoing validation of the classification accuracy
+
+
+## 4.6 Deployment Considerations
+
+### 4.6.1 Static Site Generation
+
+The application is built as a static site that can be deployed on platforms like Vercel, Netlify, or GitHub Pages - perfect for student projects with budget constraints.
+
+### 4.6.2 Performance Metrics
+
+- **Bundle Size**: Optimized through Next.js automatic code splitting
+- **Load Time**: Fast initial load due to client-side processing
+- **Analysis Speed**: Near-instantaneous results after model initialization
+
+
+This implementation demonstrates practical application of machine learning concepts while maintaining modern web development standards, making it an excellent showcase project for a Nigerian computer science student's portfolio.

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MAU Yola Campus Guide</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+    }
+
+    #sidebar {
+      width: 250px;
+      background-color: #f8f9fa;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+
+    #sidebar h2 {
+      font-size: 1.4em;
+      margin-bottom: 20px;
+    }
+
+    #sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #sidebar ul li {
+      margin: 10px 0;
+    }
+
+    #sidebar ul li a {
+      text-decoration: none;
+      color: #333;
+      font-size: 1.1em;
+    }
+
+    #sidebar ul li a:hover {
+      color: #007bff;
+    }
+
+    #map-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    #search-container {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1001;
+      display: flex;
+      background: #fff;
+      padding: 5px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    #search-bar {
+      padding: 10px;
+      width: 250px;
+      border: none;
+      border-radius: 8px 0 0 8px;
+      outline: none;
+    }
+
+    #search-button, #directions-button {
+      padding: 10px;
+      border: none;
+      background: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      color: #333;
+    }
+
+    #search-button {
+      border-right: 1px solid #ccc;
+    }
+
+    #directions-button {
+      border-radius: 0 8px 8px 0;
+    }
+
+    #directions {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      width: 300px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 1000;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+
+      #sidebar {
+        width: 100%;
+        padding: 10px;
+        box-shadow: none;
+        text-align: center;
+      }
+
+      #sidebar ul {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      #sidebar ul li a {
+        background: #e9ecef;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+
+      #map-container {
+        height: calc(100vh - 160px);
+      }
+
+      #search-container {
+        top: auto;
+        bottom: 10px;
+        left: 5%;
+        transform: none;
+        width: 70%;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 10px;
+      }
+
+      #search-bar,
+      #search-button,
+      #directions-button {
+        width: 100%;
+        margin: 5px 0;
+        border-radius: 6px;
+      }
+
+      #directions {
+        width: 90%;
+        left: 5%;
+        bottom: 70px;
+        top: auto;
+        font-size: 14px;
+      }
+    }
+
+   @media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
+  #sidebar {
+    width: 100%;
+    padding: 10px;
+    box-shadow: none;
+    text-align: center;
+  }
+
+  #sidebar ul {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  #sidebar ul li a {
+    background: #e9ecef;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  #map-container {
+    height: calc(100vh - 140px);
+    width: 100%;
+  }
+
+  #search-container {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1002;
+  }
+
+  #search-bar {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+
+  #search-button,
+  #directions-button {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    border: none;
+    background-color: #f8f9fa;
+    color: #333;
+    cursor: pointer;
+  }
+
+  #search-button:hover,
+  #directions-button:hover {
+    background-color: #e2e6ea;
+  }
+
+  #directions {
+    position: absolute;
+    bottom: 130px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 92%;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1001;
+    font-size: 13px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+}
+
+
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <h2>MAU Campus Guide</h2>
+    <ul>
+      <li><a href="#" onclick="focusMap()">Map</a></li>
+      <li><a href="#" onclick="showAbout()">About MAU</a></li>
+      <li><a href="https://mau.safsrms.com/" target="_blank">School Portal</a></li>
+      
+    </ul>
+  </div>
+
+  <div id="map-container">
+    <div id="search-container">
+      <input type="text" id="search-bar" placeholder="Search location..." list="location-list"/>
+      <datalist id="location-list"></datalist>
+      <button id="search-button"><i class="fas fa-search"></i></button>
+      <button id="directions-button"><i class="fas fa-route"></i></button>
+    </div>
+    <div id="directions"></div>
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+
+    
+    const map = L.map('map').setView([9.3333, 12.4964], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let userMarker = null;
+    let destinationMarker = null;
+    let routeLayer = null;
+    let locations = [];
+    let selectedLocation = null;
+
+    fetch('/locations')
+      .then(res => res.json())
+      .then(data => {
+        locations = data;
+        const datalist = document.getElementById('location-list');
+        locations.forEach(loc => {
+          const opt = document.createElement('option');
+          opt.value = loc.name;
+          datalist.appendChild(opt);
+
+          L.marker([loc.lat, loc.lon])
+            .addTo(map)
+            .bindPopup(loc.name); // Popup only on click
+        });
+      });
+
+navigator.geolocation.getCurrentPosition(pos => {
+  const { latitude, longitude } = pos.coords;
+  if (userMarker) {
+    userMarker.setLatLng([latitude, longitude]);
+  } else {
+    userMarker = L.circleMarker([latitude, longitude], {
+      color: 'blue',
+      radius: 8
+    }).addTo(map).bindPopup('You are here');
+  }
+  map.setView([latitude, longitude], 17); // Zoom to user location immediately
+}, error => {
+  console.error('Geolocation error:', error);
+  alert('Enable location to center map on your position.');
+});
+
+
+    document.getElementById('search-button').addEventListener('click', () => {
+      const query = document.getElementById('search-bar').value.toLowerCase();
+      const match = locations.find(loc => loc.name.toLowerCase() === query);
+      if (!match) return alert('Location not found.');
+      selectedLocation = match;
+      if (destinationMarker) map.removeLayer(destinationMarker);
+      destinationMarker = L.marker([match.lat, match.lon])
+        .addTo(map)
+        .bindPopup(match.name)
+        .openPopup();
+      map.panTo([match.lat, match.lon]);
+    });
+
+   let watchID = null;
+
+function fetchRoute(start, end) {
+  fetch(`/directions?start=${start[0]},${start[1]}&end=${end[0]},${end[1]}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.route || data.route.length === 0) {
+        console.warn('No route found:', data.error);
+        return;
+      }
+
+      if (routeLayer) map.removeLayer(routeLayer);
+      routeLayer = L.polyline(data.route, {
+      color: 'blue',
+      dashArray: '6, 12', // pattern: 6px dash, 12px gap
+      weight: 4
+    }).addTo(map);
+
+
+      document.getElementById('directions').style.display = 'block';
+      document.getElementById('directions').innerHTML = `
+        <h3>Directions to ${selectedLocation.name} (${data.distance.toFixed(2)} km)</h3>
+        <ol>${data.steps.map(step => `<li>${step}</li>`).join('')}</ol>
+      `;
+
+      map.fitBounds(routeLayer.getBounds());
+    })
+    .catch(err => {
+      console.error('Fetch error:', err);
+    });
+}
+
+document.getElementById('directions-button').addEventListener('click', () => {
+  if (!selectedLocation) {
+    alert('Search for a destination first.');
+    return;
+  }
+
+  const end = [selectedLocation.lat, selectedLocation.lon];
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    const start = [pos.coords.latitude, pos.coords.longitude];
+
+    userMarker = L.circleMarker(start, {
+      color: 'blue',
+      radius: 8
+    }).addTo(map).bindPopup('You are here');
+
+    fetchRoute(start, end);
+  }, err => {
+    console.error(err);
+  });
+});
+
+    function focusMap() {
+      map.setView([9.3333, 12.4964], 15);
+    }
+
+    function showAbout() {
+     alert(
+      "📍 About Modibbo Adama University (MAU Yola)\n\n" +
+      "MAU is a top federal university in Nigeria, known for excellence in science, technology, and innovation.\n\n" +
+      "🏥 School Clinic: Provides medical care for students and staff.\n\n" +
+      "🧑‍🏫 Guidance & Counselling: Offers advice and support on academics, career, and personal issues.\n\n" +
+      "🛡 Security Office: Ensures safety and order on campus.\n\n" +
+      "💻 School Portal: For course registration, results, and other academic services.\n\n" +
+      "🔍 Tip: You can search for these facilities on the map using the search bar."
+    );
+    }
+
+    function showUpdates() {
+      alert("Check this section for announcements, exam timetables, and registration deadlines.");
+    }
+  </script>
+</body>
+</html>
